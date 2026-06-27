@@ -1,0 +1,1 @@
+This folder contains the React frontend code for the Cybersecurity Incident Agent, providing the user interface for incident submission and AI analysis display.

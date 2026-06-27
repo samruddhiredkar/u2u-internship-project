@@ -1,0 +1,1 @@
+This folder contains the FastAPI backend code, which serves as the core engine for processing incident data and integrating with the AI analysis logic.
