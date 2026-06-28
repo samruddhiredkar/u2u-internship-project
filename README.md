@@ -67,3 +67,14 @@ sequenceDiagram
     Groq_AI-->>FastAPI: Return Incident Analysis
     FastAPI-->>Frontend: Send JSON Response
     Frontend-->>User: Display AI Response
+
+### SYSTEM ARCHITECTURE OVERVIEW
+
+```mermaid
+graph TD
+    User((User)) -->|Input| Frontend[React Frontend]
+    Frontend -->|API Request| FastAPI[FastAPI Backend]
+    FastAPI -->|Prompt| Groq[Groq AI Agent]
+    Groq -->|Analysis| FastAPI
+    FastAPI -->|JSON Response| Frontend
+    Frontend -->|Output| User
