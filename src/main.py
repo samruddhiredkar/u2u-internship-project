@@ -1,5 +1,6 @@
 import os
 import json
+import sqlite3
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -11,10 +12,10 @@ load_dotenv()
 
 app = FastAPI()
 
-# CORS Middleware (Allows frontend to talk to backend)
+# CORS Middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -22,8 +23,24 @@ app.add_middleware(
 # Initialize Groq client
 api_key = os.getenv("GROQ_API_KEY")
 if not api_key:
-    raise RuntimeError("GROQ_API_KEY not found in environment variables.")
+    raise RuntimeError("GROQ_API_KEY not found.")
 client = Groq(api_key=api_key)
+
+# Database helper
+def get_db_connection():
+    return sqlite3.connect('data/incidents.db')
+
+# --- OPTIMIZATION 1: Load data ONCE at startup ---
+def load_data(filename):
+    try:
+        with open(f'data/{filename}', 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return []
+
+# Load data into global memory
+PLAYBOOKS = load_data('playbooks.json')
+CVE_DATA = load_data('cve_data.json')
 
 # Models
 class ChatRequest(BaseModel):
@@ -33,35 +50,26 @@ class FeedbackRequest(BaseModel):
     incident_id: str
     rating: int
 
-# Utility to load knowledge base
-def load_data(filename):
-    try:
-        with open(f'data/{filename}', 'r') as f:
-            return json.load(f)
-    except FileNotFoundError:
-        print(f"Warning: {filename} not found.")
-        return []
-
+# --- OPTIMIZATION 2: Verified Health Check ---
 @app.get("/api/health")
 def health_check():
-    return {"status": "healthy", "database": "connected"}
+    try:
+        conn = get_db_connection()
+        conn.close()
+        return {"status": "healthy", "database": "connected"}
+    except:
+        return {"status": "error", "database": "disconnected"}
 
 @app.post("/api/chat")
 async def chat(request: ChatRequest):
     try:
-        # Load both knowledge sources
-        playbooks = load_data('playbooks.json')
-        cve_data = load_data('cve_data.json')
-        
-        # Build System Prompt - Focused for higher quality answers
+        # --- OPTIMIZATION 3: Using pre-loaded global data ---
         system_instructions = (
             "You are a Cybersecurity Assistant. "
-            f"Use these playbooks: {json.dumps(playbooks)[:2000]}... " # Truncated to stay within token limits
-            f"Use these CVE records: {json.dumps(cve_data)[:1000]}... "
-            "Provide specific, actionable steps. If the incident is not covered, provide general best practice guidance."
+            f"Reference Data: {json.dumps(PLAYBOOKS[:10])}. " # Only send a relevant sample
+            "Provide specific, actionable steps based on these playbooks."
         )
         
-        # API Call
         chat_completion = client.chat.completions.create(
             messages=[
                 {"role": "system", "content": system_instructions},
