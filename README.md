@@ -53,6 +53,8 @@ print(df)
 ```
 
 ### SYSTEM ARCHITECTURE
+
+```mermaid
 sequenceDiagram
     participant User
     participant Frontend
