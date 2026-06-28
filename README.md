@@ -67,6 +67,7 @@ sequenceDiagram
     Groq_AI-->>FastAPI: Return Incident Analysis
     FastAPI-->>Frontend: Send JSON Response
     Frontend-->>User: Display AI Response
+```
 
 ### SYSTEM ARCHITECTURE OVERVIEW
 
