@@ -79,3 +79,14 @@ graph TD
     Groq -->|Analysis| FastAPI
     FastAPI -->|JSON Response| Frontend
     Frontend -->|Output| User
+```
+### HOW TO RUN
+**Backend:**
+1. Navigate to the root folder: `cd .`
+2. Install dependencies: `pip install -r requirements.txt`
+3. Start the server: `uvicorn src.main:app --reload`
+
+**Frontend:**
+1. Navigate to the frontend folder: `cd frontend`
+2. Install dependencies: `npm install`
+3. Start the app: `npm start`
