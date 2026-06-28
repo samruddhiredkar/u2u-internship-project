@@ -51,3 +51,17 @@ conn = sqlite3.connect('deployment/incident_response.db')
 df = pd.read_sql('SELECT * FROM incidents', conn)
 print(df)
 ```
+
+### SYSTEM ARCHITECTURE
+sequenceDiagram
+    participant User
+    participant Frontend
+    participant FastAPI
+    participant Groq_AI
+
+    User->>Frontend: Submit Incident Data
+    Frontend->>FastAPI: POST /api/chat
+    FastAPI->>Groq_AI: Send Prompt (Cybersecurity context)
+    Groq_AI-->>FastAPI: Return Incident Analysis
+    FastAPI-->>Frontend: Send JSON Response
+    Frontend-->>User: Display AI Response
