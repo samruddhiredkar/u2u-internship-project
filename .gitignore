@@ -1,1 +1,19 @@
+# Sensitive Information
+.env
+
+# Python (Virtual Environments and cache)
+__pycache__/
+*.py[cod]
+venv/
+env/
+.venv/
+
+# React / Node.js
 node_modules/
+dist/
+build/
+.output/
+
+# OS/System files
+.DS_Store
+Thumbs.db
