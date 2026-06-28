@@ -305,6 +305,3 @@
     }
   ]
 }
-# Assuming 'playbooks_df' and 'cve_df' are your cleaned dataframes
-playbooks_df.to_json('data/playbooks.json', orient='records')
-cve_df.to_json('data/cve_data.json', orient='records')
