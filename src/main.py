@@ -11,15 +11,15 @@ load_dotenv()
 
 app = FastAPI()
 
-# CORS Middleware (Essential for browser-based frontend access)
+# CORS Middleware (Allows frontend to talk to backend)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Replace "*" with specific domains in production
+    allow_origins=["*"], 
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Initialize Groq client with error checking
+# Initialize Groq client
 api_key = os.getenv("GROQ_API_KEY")
 if not api_key:
     raise RuntimeError("GROQ_API_KEY not found in environment variables.")
@@ -39,7 +39,8 @@ def load_data(filename):
         with open(f'data/{filename}', 'r') as f:
             return json.load(f)
     except FileNotFoundError:
-        return {}
+        print(f"Warning: {filename} not found.")
+        return []
 
 @app.get("/api/health")
 def health_check():
@@ -48,12 +49,15 @@ def health_check():
 @app.post("/api/chat")
 async def chat(request: ChatRequest):
     try:
-        # Load your knowledge base
+        # Load both knowledge sources
         playbooks = load_data('playbooks.json')
+        cve_data = load_data('cve_data.json')
         
-        # Build System Prompt with injected context
+        # Build System Prompt - Focused for higher quality answers
         system_instructions = (
-            f"You are a Cybersecurity Assistant. Use these playbooks for reference: {json.dumps(playbooks)}. "
+            "You are a Cybersecurity Assistant. "
+            f"Use these playbooks: {json.dumps(playbooks)[:2000]}... " # Truncated to stay within token limits
+            f"Use these CVE records: {json.dumps(cve_data)[:1000]}... "
             "Provide specific, actionable steps. If the incident is not covered, provide general best practice guidance."
         )
         
@@ -72,7 +76,6 @@ async def chat(request: ChatRequest):
         }
         
     except Exception as e:
-        # Professional Error Handling
         print(f"Server Error: {e}")
         raise HTTPException(status_code=500, detail="Error communicating with AI service.")
 
@@ -86,5 +89,4 @@ def users():
 
 @app.post("/api/feedback")
 def feedback(payload: FeedbackRequest):
-    # Log logic here
     return {"status": "logged", "received_rating": payload.rating}
