@@ -26,11 +26,11 @@ if not api_key:
     raise RuntimeError("GROQ_API_KEY not found.")
 client = Groq(api_key=api_key)
 
-# Database helper
+# --- FIX 1: Corrected Database Path ---
 def get_db_connection():
-    return sqlite3.connect('data/incidents.db')
+    return sqlite3.connect('deployment/incident_response.db')
 
-# --- OPTIMIZATION 1: Load data ONCE at startup ---
+# Utility to load knowledge base
 def load_data(filename):
     try:
         with open(f'data/{filename}', 'r') as f:
@@ -50,7 +50,6 @@ class FeedbackRequest(BaseModel):
     incident_id: str
     rating: int
 
-# --- OPTIMIZATION 2: Verified Health Check ---
 @app.get("/api/health")
 def health_check():
     try:
@@ -63,11 +62,15 @@ def health_check():
 @app.post("/api/chat")
 async def chat(request: ChatRequest):
     try:
-        # --- OPTIMIZATION 3: Using pre-loaded global data ---
+        # --- FIX 2 & 3: Proper JSON Slicing and CVE Re-injection ---
+        # Access the list inside the 'playbooks' key and include CVEs
+        playbook_list = PLAYBOOKS.get("playbooks", []) if isinstance(PLAYBOOKS, dict) else PLAYBOOKS
+        
         system_instructions = (
             "You are a Cybersecurity Assistant. "
-            f"Reference Data: {json.dumps(PLAYBOOKS[:10])}. " # Only send a relevant sample
-            "Provide specific, actionable steps based on these playbooks."
+            f"Reference Playbooks: {json.dumps(playbook_list[:10])}. " 
+            f"Reference CVE Data: {json.dumps(CVE_DATA)}. "
+            "Provide specific, actionable steps based on these data sources."
         )
         
         chat_completion = client.chat.completions.create(
