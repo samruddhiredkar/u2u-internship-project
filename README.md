@@ -105,7 +105,7 @@ graph TD
     Backend <-->|JSON Context Read| DB_JSON[JSON Files: Playbooks & CVEs]
     Backend <-->|Health Check Connection| DB_SQL[SQLite Database]
     Backend <-->|Secure HTTPS API Request| Groq[Groq AI Cloud Layer]
-
+```
 
 sequenceDiagram
     autonumber
@@ -113,7 +113,7 @@ sequenceDiagram
     participant FE as React Frontend
     participant BE as FastAPI Backend
     participant AI as Groq API (Llama 3.1)
-```
+
 
     User->>FE: Types incident details & clicks "Submit"
     FE->>BE: POST /api/chat { prompt }
