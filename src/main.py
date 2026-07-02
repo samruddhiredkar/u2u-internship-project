@@ -61,9 +61,16 @@ def health_check():
 
 @app.post("/api/chat")
 async def chat(request: ChatRequest):
+    # 1. Handle Missing Parameters / Invalid Requests (Client-Side Errors)
+    # Checks if the prompt is empty or just whitespace
+    if not request.prompt or not request.prompt.strip():
+        raise HTTPException(
+            status_code=400, 
+            detail="Prompt required. Request payload cannot be empty."
+        )
+        
     try:
-        # --- FIX 2 & 3: Proper JSON Slicing and CVE Re-injection ---
-        # Access the list inside the 'playbooks' key and include CVEs
+        # Access the list inside the playbooks memory object
         playbook_list = PLAYBOOKS.get("playbooks", []) if isinstance(PLAYBOOKS, dict) else PLAYBOOKS
         
         system_instructions = (
@@ -73,12 +80,15 @@ async def chat(request: ChatRequest):
             "Provide specific, actionable steps based on these data sources."
         )
         
+        # API Call wrapped in a timeout/error check layer
+        import groq
         chat_completion = client.chat.completions.create(
             messages=[
                 {"role": "system", "content": system_instructions},
                 {"role": "user", "content": request.prompt}
             ],
-            model="llama3-8b-8192",
+            model="llama-3.1-8b-instant",
+            timeout=15.0 # 2. Handle Timeout Conditions (Stops hanging if API is slow)
         )
         
         return {
@@ -86,9 +96,15 @@ async def chat(request: ChatRequest):
             "incident_type": "analyzed_by_ai"
         }
         
+    except groq.APIStatusError as e:
+        # 3. Handle Specific Invalid API Keys or Bad Request configurations
+        print(f"Groq API Error: {e.status_code} - {e.message}")
+        raise HTTPException(status_code=e.status_code, detail=f"AI Service Error: {e.message}")
+        
     except Exception as e:
+        # 4. Handle Unexpected Server Errors 
         print(f"Server Error: {e}")
-        raise HTTPException(status_code=500, detail="Error communicating with AI service.")
+        raise HTTPException(status_code=500, detail="An internal server error occurred while communicating with the AI service.")
 
 @app.get("/api/history")
 def history():
