@@ -26,6 +26,9 @@ if not api_key:
     raise RuntimeError("GROQ_API_KEY not found.")
 client = Groq(api_key=api_key)
 
+# Initialize global history storage
+chat_history = []
+
 # --- FIX 1: Corrected Database Path ---
 def get_db_connection():
     return sqlite3.connect('deployment/incident_response.db')
@@ -61,8 +64,6 @@ def health_check():
 
 @app.post("/api/chat")
 async def chat(request: ChatRequest):
-    # 1. Handle Missing Parameters / Invalid Requests (Client-Side Errors)
-    # Checks if the prompt is empty or just whitespace
     if not request.prompt or not request.prompt.strip():
         raise HTTPException(
             status_code=400, 
@@ -70,7 +71,6 @@ async def chat(request: ChatRequest):
         )
         
     try:
-        # Access the list inside the playbooks memory object
         playbook_list = PLAYBOOKS.get("playbooks", []) if isinstance(PLAYBOOKS, dict) else PLAYBOOKS
         
         system_instructions = (
@@ -80,7 +80,6 @@ async def chat(request: ChatRequest):
             "Provide specific, actionable steps based on these data sources."
         )
         
-        # API Call wrapped in a timeout/error check layer
         import groq
         chat_completion = client.chat.completions.create(
             messages=[
@@ -88,27 +87,34 @@ async def chat(request: ChatRequest):
                 {"role": "user", "content": request.prompt}
             ],
             model="llama-3.1-8b-instant",
-            timeout=15.0 # 2. Handle Timeout Conditions (Stops hanging if API is slow)
+            timeout=15.0
         )
         
+        response_text = chat_completion.choices[0].message.content
+        
+        # Save the interaction to our global history
+        chat_history.append({
+            "question": request.prompt,
+            "answer": response_text
+        })
+        
         return {
-            "response": chat_completion.choices[0].message.content, 
+            "response": response_text, 
             "incident_type": "analyzed_by_ai"
         }
         
     except groq.APIStatusError as e:
-        # 3. Handle Specific Invalid API Keys or Bad Request configurations
         print(f"Groq API Error: {e.status_code} - {e.message}")
         raise HTTPException(status_code=e.status_code, detail=f"AI Service Error: {e.message}")
         
     except Exception as e:
-        # 4. Handle Unexpected Server Errors 
         print(f"Server Error: {e}")
         raise HTTPException(status_code=500, detail="An internal server error occurred while communicating with the AI service.")
 
 @app.get("/api/history")
 def history():
-    return {"history": []}
+    # Now returns the stored history data
+    return {"history": chat_history}
 
 @app.get("/api/users")
 def users():
