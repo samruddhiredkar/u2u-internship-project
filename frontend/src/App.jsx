@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
 
 const API_BASE_URL = "https://u2u-internship-project.onrender.com";
 
@@ -7,13 +8,11 @@ function App() {
   const [response, setResponse] = useState("");
   const [history, setHistory] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
 
   const styles = {
-    // Container forces everything to be centered and limits width
     container: { maxWidth: '800px', margin: '0 auto', padding: '20px' },
-    body: { backgroundColor: '#0f172a', color: '#e2e8f0', minHeight: '100vh', fontFamily: 'monospace' },
-    card: { backgroundColor: '#1e293b', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.3)', marginBottom: '20px' },
+    body: { backgroundColor: '#0f172a', color: '#e2e8f0', minHeight: '100vh', fontFamily: 'sans-serif', lineHeight: '1.6' },
+    card: { backgroundColor: '#1e293b', padding: '25px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.3)', marginBottom: '20px' },
     textarea: { width: '100%', height: '120px', backgroundColor: '#334155', color: '#fff', border: '1px solid #475569', borderRadius: '8px', padding: '12px', fontSize: '16px', boxSizing: 'border-box' },
     button: { backgroundColor: '#3b82f6', color: 'white', border: 'none', padding: '12px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', marginTop: '15px', width: '100%' },
     historyItem: { borderLeft: '4px solid #3b82f6', marginBottom: '15px', backgroundColor: '#334155', padding: '15px', borderRadius: '4px' }
@@ -28,23 +27,16 @@ function App() {
 
   const handleSubmit = async () => {
     setIsLoading(true);
-    setError("");
     setResponse("");
-
     try {
       const res = await fetch(`${API_BASE_URL}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt })
       });
-
-      if (!res.ok) throw new Error("Server failed to respond.");
-
       const data = await res.json();
       setResponse(data.response);
       setHistory([...history, { question: prompt, answer: data.response }]);
-    } catch (err) {
-      setError("Unable to connect to the AI service.");
     } finally {
       setIsLoading(false);
     }
@@ -54,33 +46,16 @@ function App() {
     <div style={styles.body}>
       <div style={styles.container}>
         <h1 style={{ color: '#60a5fa', textAlign: 'center' }}>// CYBER-INCIDENT-AGENT</h1>
-        
         <div style={styles.card}>
-          <textarea 
-            style={styles.textarea} 
-            value={prompt} 
-            onChange={(e) => setPrompt(e.target.value)} 
-            placeholder="Enter system log or incident description..."
-            disabled={isLoading}
-          />
+          <textarea style={styles.textarea} value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Enter system log..." disabled={isLoading} />
           <button style={styles.button} onClick={handleSubmit} disabled={isLoading}>
-            {isLoading ? "RUNNING ANALYSIS..." : "INITIATE ANALYSIS"}
+            {isLoading ? "ANALYZING..." : "INITIATE ANALYSIS"}
           </button>
-          {error && <div style={{ color: '#f87171', marginTop: '10px', textAlign: 'center' }}>{error}</div>}
         </div>
-
         <div style={styles.card}>
-          <h3 style={{ color: '#34d399' }}>[ AI ANALYSIS OUTPUT ]</h3>
-          <p>{response || "Waiting for input..."}</p>
+          <h3 style={{ color: '#34d399', marginTop: '0' }}>[ AI ANALYSIS OUTPUT ]</h3>
+          <ReactMarkdown>{response || "Waiting for input..."}</ReactMarkdown>
         </div>
-
-        <h3>[ PREVIOUS INCIDENTS ]</h3>
-        {history.map((item, index) => (
-          <div key={index} style={styles.historyItem}>
-            <p><strong>Query:</strong> {item.question}</p>
-            <p><strong>Result:</strong> {item.answer}</p>
-          </div>
-        ))}
       </div>
     </div>
   );
