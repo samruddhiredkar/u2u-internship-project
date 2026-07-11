@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
 
+// Use the environment variable or the hardcoded Render URL
+const API_BASE_URL = "https://u2u-internship-project.onrender.com";
+
 function App() {
   const [prompt, setPrompt] = useState("");
   const [response, setResponse] = useState("");
-  const [history, setHistory] = useState([]); // New state for history
+  const [history, setHistory] = useState([]); 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Load history from backend when the app first starts
+  // Load history from backend
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/api/history")
+    fetch(`${API_BASE_URL}/api/history`)
       .then(res => res.json())
       .then(data => setHistory(data.history))
       .catch(err => console.error("Failed to load history", err));
@@ -21,7 +24,7 @@ function App() {
     setResponse("");
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/chat", {
+      const res = await fetch(`${API_BASE_URL}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt })
@@ -34,10 +37,9 @@ function App() {
       const data = await res.json();
       setResponse(data.response);
       
-      // Refresh history immediately after a successful response
       setHistory([...history, { question: prompt, answer: data.response }]);
     } catch (err) {
-      setError("Unable to connect to the AI service. Is the backend running?");
+      setError("Unable to connect to the AI service. Please check your internet connection.");
     } finally {
       setIsLoading(false);
     }
@@ -52,6 +54,7 @@ function App() {
         onChange={(e) => setPrompt(e.target.value)} 
         placeholder="Enter incident details..."
         disabled={isLoading}
+        style={{ width: '100%', height: '100px', marginBottom: '10px' }}
       />
       
       <button onClick={handleSubmit} disabled={isLoading}>
@@ -64,7 +67,6 @@ function App() {
         <strong>AI Analysis:</strong> {response}
       </div>
 
-      {/* History Section: Fulfills Task 5 Deliverable */}
       <div style={{ marginTop: '30px' }}>
         <h3>Conversation History</h3>
         {history.map((item, index) => (
