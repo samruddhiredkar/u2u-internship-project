@@ -46,16 +46,26 @@ function App() {
     <div style={styles.body}>
       <div style={styles.container}>
         <h1 style={{ color: '#60a5fa', textAlign: 'center' }}>// CYBER-INCIDENT-AGENT</h1>
+        
         <div style={styles.card}>
           <textarea style={styles.textarea} value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Enter system log..." disabled={isLoading} />
           <button style={styles.button} onClick={handleSubmit} disabled={isLoading}>
             {isLoading ? "ANALYZING..." : "INITIATE ANALYSIS"}
           </button>
         </div>
+
         <div style={styles.card}>
           <h3 style={{ color: '#34d399', marginTop: '0' }}>[ AI ANALYSIS OUTPUT ]</h3>
           <ReactMarkdown>{response || "Waiting for input..."}</ReactMarkdown>
         </div>
+
+        <h3>[ PREVIOUS INCIDENTS ]</h3>
+        {history.map((item, index) => (
+          <div key={index} style={styles.historyItem}>
+            <p><strong>Query:</strong> {item.question}</p>
+            <p><strong>Result:</strong> {item.answer.substring(0, 100)}...</p>
+          </div>
+        ))}
       </div>
     </div>
   );
