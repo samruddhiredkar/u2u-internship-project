@@ -8,6 +8,8 @@ function App() {
   const [response, setResponse] = useState("");
   const [history, setHistory] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  // Added state to track which history items are expanded
+  const [expandedItems, setExpandedItems] = useState({});
 
   const styles = {
     container: { maxWidth: '800px', margin: '0 auto', padding: '20px' },
@@ -15,7 +17,12 @@ function App() {
     card: { backgroundColor: '#1e293b', padding: '25px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.3)', marginBottom: '20px' },
     textarea: { width: '100%', height: '120px', backgroundColor: '#334155', color: '#fff', border: '1px solid #475569', borderRadius: '8px', padding: '12px', fontSize: '16px', boxSizing: 'border-box' },
     button: { backgroundColor: '#3b82f6', color: 'white', border: 'none', padding: '12px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', marginTop: '15px', width: '100%' },
-    historyItem: { borderLeft: '4px solid #3b82f6', marginBottom: '15px', backgroundColor: '#334155', padding: '15px', borderRadius: '4px' }
+    // Added pointer cursor to indicate interactiveness
+    historyItem: { borderLeft: '4px solid #3b82f6', marginBottom: '15px', backgroundColor: '#334155', padding: '15px', borderRadius: '4px', cursor: 'pointer' }
+  };
+
+  const toggleExpand = (index) => {
+    setExpandedItems(prev => ({ ...prev, [index]: !prev[index] }));
   };
 
   useEffect(() => {
@@ -61,9 +68,13 @@ function App() {
 
         <h3>[ PREVIOUS INCIDENTS ]</h3>
         {history.map((item, index) => (
-          <div key={index} style={styles.historyItem}>
+          <div key={index} style={styles.historyItem} onClick={() => toggleExpand(index)}>
             <p><strong>Query:</strong> {item.question}</p>
-            <p><strong>Result:</strong> {item.answer.substring(0, 100)}...</p>
+            {expandedItems[index] ? (
+              <ReactMarkdown>{"**Result:** " + item.answer}</ReactMarkdown>
+            ) : (
+              <p style={{ fontSize: '0.9em', color: '#94a3b8' }}><em>Click to expand full analysis...</em></p>
+            )}
           </div>
         ))}
       </div>
