@@ -1,7 +1,7 @@
 import os
 import json
 import sqlite3
-import pathlib import Path
+from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
