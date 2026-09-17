@@ -34,7 +34,7 @@ chat_history = []
 
 # --- FIX 1: Corrected Database Path ---
 def get_db_connection():
-    db_path = BASE_DIR / 'deployment' / 'incident_responses.db'
+    db_path = BASE_DIR / 'deployment' / 'incident_response.db'
     return sqlite3.connect(db_path)
 
 # Utility to load knowledge base
