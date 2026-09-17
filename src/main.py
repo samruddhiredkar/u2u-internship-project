@@ -1,6 +1,7 @@
 import os
 import json
 import sqlite3
+import pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -11,6 +12,8 @@ from groq import Groq
 load_dotenv()
 
 app = FastAPI()
+
+BASE_DIR = Path(__file__).resolve().parent
 
 # CORS Middleware
 app.add_middleware(
@@ -31,14 +34,17 @@ chat_history = []
 
 # --- FIX 1: Corrected Database Path ---
 def get_db_connection():
-    return sqlite3.connect('deployment/incident_response.db')
+    db_path = BASE_DIR / 'deployment' / 'incident_responses.db'
+    return sqlite3.connect(db_path)
 
 # Utility to load knowledge base
 def load_data(filename):
     try:
-        with open(f'data/{filename}', 'r') as f:
+        file_path = BASE_DIR / 'data' / filename
+        with open(file_path, 'r') as f:
             return json.load(f)
     except FileNotFoundError:
+        print(f"Warning: Could not find {filename} at {BASE_DIR / 'data'}")
         return []
 
 # Load data into global memory
